@@ -3,24 +3,30 @@ steps:
     args:
       - build
       - '-t'
-      - '$_GCR_HOSTNAME/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
       - .
   - name: gcr.io/cloud-builders/docker
     args:
       - push
-      - '$_GCR_HOSTNAME/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     args:
       - run
       - deploy
       - $_SERVICE_NAME
       - '--image'
-      - '$_GCR_HOSTNAME/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
       - '--region'
       - $_DEPLOY_REGION
       - '--platform'
       - $_PLATFORM
+      - '--port'
+      - '80'
     entrypoint: gcloud
 timeout: 1200s
 images:
-  - '$_GCR_HOSTNAME/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
+  - 'europe-west1-docker.pkg.dev/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
+substitutions:
+  _DEPLOY_REGION: europe-west1
+  _PLATFORM: managed
+  _SERVICE_NAME: driverrelay-frontend
