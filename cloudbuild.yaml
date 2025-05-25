@@ -1,36 +1,26 @@
 steps:
-  # Install dependencies
-  - name: 'node:20'
-    entrypoint: 'npm'
-    args: ['install']
-    dir: '.'
-  # Build the Angular app
-  - name: 'node:20'
-    entrypoint: 'npm'
-    args: ['run', 'build', '--', '--configuration=production']
-    dir: '.'
-  # Build the Docker image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'europe-west1-docker.pkg.dev/driverrelay/cloud-run-source-deploy/driverrelay-frontend:$COMMIT_SHA', '.']
-  # Push the Docker image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'europe-west1-docker.pkg.dev/driverrelay/cloud-run-source-deploy/driverrelay-frontend:$COMMIT_SHA']
-  # Deploy to Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
+  - name: gcr.io/cloud-builders/docker
     args:
-      - 'run'
-      - 'deploy'
-      - 'driverrelay-frontend'
+      - build
+      - '-t'
+      - '$_GCR_HOSTNAME/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
+      - .
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - '$_GCR_HOSTNAME/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    args:
+      - run
+      - deploy
+      - $_SERVICE_NAME
       - '--image'
-      - 'europe-west1-docker.pkg.dev/driverrelay/cloud-run-source-deploy/driverrelay-frontend:$COMMIT_SHA'
+      - '$_GCR_HOSTNAME/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
       - '--region'
-      - 'europe-west1'
-      - '--port=80'
-      - '--allow-unauthenticated'
-      - '--cpu=1'
-      - '--memory=512Mi'
-      - '--startup-cpu-boost'
-options:
-  logging: CLOUD_LOGGING_ONLY
-images: ['europe-west1-docker.pkg.dev/driverrelay/cloud-run-source-deploy/driverrelay-frontend:$COMMIT_SHA']
+      - $_DEPLOY_REGION
+      - '--platform'
+      - $_PLATFORM
+    entrypoint: gcloud
+timeout: 1200s
+images:
+  - '$_GCR_HOSTNAME/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA'
