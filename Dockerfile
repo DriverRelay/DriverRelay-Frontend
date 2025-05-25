@@ -1,14 +1,14 @@
-# Stage 1: Build the Angular application
-FROM node:20-alpine AS build
+# Stage 1: Build the Angular app
+FROM node:20 AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 COPY . .
-RUN npm run build --prod
+RUN npm run build -- --configuration=production
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
-COPY --from=build /app/dist/driverrelay-frontend /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf.template
-EXPOSE $PORT
-CMD ["/bin/sh", "-c", "envsubst '$PORT' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+COPY --from=build /app/dist/angular-app /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
